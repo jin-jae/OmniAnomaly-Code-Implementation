@@ -5,6 +5,7 @@ import pickle
 import sys
 import time
 import warnings
+import natsort
 from argparse import ArgumentParser
 from pprint import pformat, pprint
 
@@ -200,29 +201,34 @@ def main():
 
 if __name__ == '__main__':
 
-    dataset_files = ['machine-1-1.txt', 'machine-1-2.txt', 'machine-1-3.txt', 'machine-1-4.txt', 'machine-1-5.txt',
-                     'machine-1-6.txt', 'machine-1-7.txt', 'machine-1-8.txt', 'machine-2-1.txt', 'machine-2-2.txt',
-                     'machine-2-3.txt', 'machine-2-4.txt', 'machine-2-5.txt', 'machine-2-6.txt', 'machine-2-7.txt',
-                     'machine-2-8.txt', 'machine-2-9.txt', 'machine-3-1.txt', 'machine-3-2.txt', 'machine-3-3.txt',
-                     'machine-3-4.txt', 'machine-3-5.txt', 'machine-3-6.txt', 'machine-3-7.txt', 'machine-3-8.txt',
-                     'machine-3-9.txt', 'machine-3-10.txt', 'machine-3-11.txt']
+    dataset_files = os.listdir("./ServerMachineDataset/train")
+    dataset_files = natsort.natsorted(dataset_files)
     
     for file in dataset_files:
         # get config obj
         config = ExpConfig()
-        config.dataset = file.replace('.txt', '')
+        dataset_str = file.replace('.txt', '')
+        config.dataset = dataset_str
 
-        config_id = config.dataset.replace('-', '_')
+        config_id = dataset_str.replace('-', '_')
         config.save_dir = f'model_{config_id}'
         config.result_dir = f'result_{config_id}'  # Where to save the result file
         config.train_score_filename = f'train_score_{config_id}.pkl'
         config.test_score_filename = f'test_score_{config_id}.pkl'
 
+        if config_id.startswith("result_machine_1"):
+            config.level = 0.0050
+        elif config_id.startswith("result_machine_2"):
+            config.level = 0.0075
+        else:
+            config.level = 0.0001
+
+
         # parse the arguments
         arg_parser = ArgumentParser()
         register_config_arguments(config, arg_parser)
         arg_parser.parse_args(sys.argv[1:])
-        config.x_dim = get_data_dim(config.dataset)
+        config.x_dim = get_data_dim(dataset_str)
 
         print_with_title('Configurations', pformat(config.to_dict()), after='\n')
 
